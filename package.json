@@ -1,0 +1,26 @@
+{
+  "name": "eventforge-root",
+  "version": "1.0.0",
+  "description": "EventForge - Corporate Event & Conference Management Platform Monorepo",
+  "private": true,
+  "workspaces": [
+    "server"
+  ],
+  "scripts": {
+    "dev": "npm --prefix server run dev",
+    "start": "npm --prefix server start",
+    "test": "npm --prefix server test",
+    "seed": "npm --prefix server run seed",
+    "lint": "npm --prefix server run lint",
+    "format": "npm --prefix server run format"
+  },
+  "keywords": [
+    "event-management",
+    "conference",
+    "mern",
+    "express",
+    "mongoose"
+  ],
+  "author": "EventForge Team",
+  "license": "ISC"
+}
