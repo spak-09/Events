@@ -4,21 +4,6 @@
 
 ---
 
-## 🔐 Seeded Credentials Reference Table
-
-Run `npm run seed` to populate the database with benchmark data (1 Platform SuperAdmin, 2 Organizations, 4 Venues with room layouts, 12 Speakers, 3 Events across Past/Live/Upcoming lifecycle stages, and assigned team rosters).
-
-| Role | Email | Password | Global Role | Permissions & Context |
-| :--- | :--- | :--- | :--- | :--- |
-| **Platform SuperAdmin** | `admin@eventforge.com` | `Password123!` | `platform_admin` | Full platform supervision, organization management, policy configuration, cross-event access |
-| **Event Organizer 1** | `organizer@acme.com` | `Password123!` | `user` | Organizer of *Tech Summit 2025* (Past) & *Cloud & DevOps Expo 2026* (Upcoming) |
-| **Event Organizer 2** | `organizer@globaltech.org`| `Password123!` | `user` | Organizer of *AI World Congress 2026* (Live) |
-| **Operations Staff 1** | `staff1@eventforge.com` | `Password123!` | `user` | Operational staff assigned to *Tech Summit 2025* and *AI World Congress 2026* |
-| **Operations Staff 2** | `staff2@eventforge.com` | `Password123!` | `user` | Operational staff assigned to *AI World Congress 2026* and *Cloud & DevOps Expo 2026* |
-| **Corporate Sponsor** | `sponsor@cloudscale.io` | `Password123!` | `user` | Sponsor representative for *AI World Congress 2026* & *Cloud & DevOps Expo 2026* |
-| **Registered Attendee** | `attendee@eventforge.com`| `Password123!` | `user` | Standard platform user / attendee profile |
-
----
 
 ## 🚀 Quick Start Guide
 
