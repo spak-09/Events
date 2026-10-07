@@ -52,12 +52,18 @@ const registerUser = async ({ name, email, password, phone }, ipAddress, userAge
 
   const passwordHash = await User.hashPassword(password);
 
+  // Bootstrap first registered user on a fresh deployment as platform_admin
+  const existingUsersCount = await User.countDocuments();
+  const globalRole = (env.NODE_ENV !== 'test' && existingUsersCount === 0)
+    ? GLOBAL_ROLES.PLATFORM_ADMIN
+    : GLOBAL_ROLES.USER;
+
   const user = await User.create({
     name,
     email,
     passwordHash,
     phone: phone || null,
-    globalRole: GLOBAL_ROLES.USER,
+    globalRole,
   });
 
   const tokens = await generateAuthTokens(user, ipAddress, userAgent);
@@ -189,14 +195,17 @@ const getCurrentUserProfile = async (userId) => {
     .populate('event', 'title slug status startDate endDate venue')
     .sort({ createdAt: -1 });
 
+  const mappedMemberships = memberships.map((m) => ({
+    membershipId: m._id,
+    role: m.role,
+    status: m.status,
+    event: m.event,
+  }));
+
   return {
     user,
-    eventMemberships: memberships.map((m) => ({
-      membershipId: m._id,
-      role: m.role,
-      status: m.status,
-      event: m.event,
-    })),
+    memberships: mappedMemberships,
+    eventMemberships: mappedMemberships,
   };
 };
 

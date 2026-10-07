@@ -125,6 +125,7 @@ const getEventAnalytics = async (eventId) => {
       capacity: s.capacity,
       selectedCount,
       attendedCount,
+      attendees: attendedCount,
       attendanceRatePercentage: s.capacity > 0 ? Math.round((attendedCount / s.capacity) * 100) : 0,
     });
   }
@@ -144,12 +145,14 @@ const getEventAnalytics = async (eventId) => {
 
   const feedbackData = {
     averageRating: 0,
+    count: 0,
     totalResponses: 0,
     distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
   };
 
   if (feedbackAgg.length > 0) {
     feedbackData.averageRating = Math.round(feedbackAgg[0].averageRating * 10) / 10;
+    feedbackData.count = feedbackAgg[0].totalResponses;
     feedbackData.totalResponses = feedbackAgg[0].totalResponses;
     (feedbackAgg[0].ratingsList || []).forEach((r) => {
       if (feedbackData.distribution[r] !== undefined) feedbackData.distribution[r]++;
@@ -183,13 +186,25 @@ const getEventAnalytics = async (eventId) => {
     ? Math.round((approvedDeliverables / totalDeliverables) * 100)
     : 0;
 
+  const totalRevenueRounded = Math.round(totalRevenue * 100) / 100;
+
   return {
     eventId,
     title: event.title,
     registrationsOverTime,
+    ticketMixAndRevenue: {
+      totalRevenue: totalRevenueRounded,
+      breakdown: ticketMixAggregation,
+      tickets: ticketMixAggregation,
+    },
     ticketMix: {
       breakdown: ticketMixAggregation,
-      totalGrossRevenue: Math.round(totalRevenue * 100) / 100,
+      totalGrossRevenue: totalRevenueRounded,
+    },
+    attendanceRate: {
+      totalApproved: totalApprovedOrCheckedIn,
+      totalCheckedIn,
+      ratePercentage: checkInRatePercentage,
     },
     checkInStats: {
       totalApproved: totalApprovedOrCheckedIn,

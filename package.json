@@ -4,15 +4,23 @@
   "description": "EventForge - Corporate Event & Conference Management Platform Monorepo",
   "private": true,
   "workspaces": [
-    "server"
+    "Backend",
+    "Frontend"
   ],
   "scripts": {
-    "dev": "npm --prefix server run dev",
-    "start": "npm --prefix server start",
-    "test": "npm --prefix server test",
-    "seed": "npm --prefix server run seed",
-    "lint": "npm --prefix server run lint",
-    "format": "npm --prefix server run format"
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"blue,green\" \"npm --prefix Backend run dev\" \"npm --prefix Frontend run dev\"",
+    "dev:backend": "npm --prefix Backend run dev",
+    "dev:frontend": "npm --prefix Frontend run dev",
+    "start": "npm --prefix Backend start",
+    "seed": "npm --prefix Backend run seed",
+    "db:clean": "npm --prefix Backend run db:clean",
+    "create-admin": "npm --prefix Backend run create-admin",
+    "build": "npm --prefix Frontend run build",
+    "lint": "npm --prefix Backend run lint",
+    "format": "prettier --write \"Backend/src/**/*.js\" \"Frontend/src/**/*.{js,jsx}\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   },
   "keywords": [
     "event-management",

@@ -1,137 +1,146 @@
 # EventForge — Corporate Event & Conference Management Platform
 
-**EventForge** is an enterprise-grade backend for modern conferences, corporate summits, and hybrid expos. Built with Node.js, Express, MongoDB, and Mongoose, it features a dual-layer Role-Based Access Control (RBAC) architecture, multi-tenant organization boundaries, Zod schema validation, JWT token rotation with HTTP-only cookies, structured audit trails, and interactive Swagger OpenAPI 3.0 documentation.
+EventForge is a production-grade enterprise conference management platform engineered with multi-tenant dual-layer RBAC, atomic capacity controls, 4-point conflict detection scheduling, and offline-tolerant QR check-ins.
 
 ---
 
-## 🔐 Seeded Credentials Reference Table
+## 🏗️ Architecture Overview
 
-Run `npm run seed` to populate the database with benchmark data (1 Platform SuperAdmin, 2 Organizations, 4 Venues with room layouts, 12 Speakers, 3 Events across Past/Live/Upcoming lifecycle stages, and assigned team rosters).
+```mermaid
+graph TD
+    Client[React 18 + Vite + Tailwind CSS]
+    subgraph Express API Gateway
+        SecMW[Helmet, CORS & Mongo Sanitize]
+        AuthMW[JWT Auth & Dual-Layer RBAC]
+        Modules[Events, Sessions, Tickets, Registrations, Scanner, Sponsors, Analytics]
+    end
+    subgraph Persistence & Infrastructure
+        DB[(MongoDB Database)]
+        Uploads[Local / Cloud Asset Storage]
+    end
 
+    Client -->|REST API /api/v1 (Axios)| SecMW
+    SecMW --> AuthMW
+    AuthMW --> Modules
+    Modules --> DB
+    Modules --> Uploads
+```
 
+---
 
-## 🚀 Quick Start Guide
+## 🚀 Deployment & Getting Started
 
 ### 1. Prerequisites
 - **Node.js** >= 20.0.0
-- **MongoDB** running locally on `localhost:27017` or configured via `MONGODB_URI`
+- **MongoDB** >= 6.0 (local instance or managed MongoDB Atlas cluster)
 
 ### 2. Environment Configuration
-The server includes a configured `.env` file (`server/.env`). To customize settings:
+
+#### Backend Configuration
+Copy the sample environment file in `Backend/` and configure your production values:
 ```bash
-cp server/.env.example server/.env
+cp Backend/.env.example Backend/.env
 ```
 
-### 3. Seed Database
-Run the seed script from the repository root or server folder:
-```bash
-npm run seed
+Key variables to configure in `Backend/.env`:
+```env
+NODE_ENV=production
+PORT=5000
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/eventforge?retryWrites=true&w=majority
+JWT_ACCESS_SECRET=your_high_entropy_64_char_access_secret
+JWT_REFRESH_SECRET=your_high_entropy_64_char_refresh_secret
+COOKIE_SECRET=your_high_entropy_cookie_secret
+CORS_ORIGIN=https://yourdomain.com
+UPLOAD_DIR=uploads
 ```
 
-### 4. Run Test Suite
-Run the automated test suite powered by Jest, Supertest, and MongoMemoryServer:
+#### Frontend Configuration
+Copy the sample environment file in `Frontend/` if deploying on a separate domain (e.g. Vercel, Netlify):
 ```bash
-npm test
+cp Frontend/.env.example Frontend/.env
 ```
-*Coverage includes authentication flow, token rotation, cross-event RBAC denial boundaries, event lifecycle workflows, and Zod validation errors.*
+```env
+# Full backend API URL (leave blank if deploying behind same domain / reverse proxy):
+VITE_API_URL=https://api.yourdomain.com
+```
 
-### 5. Launch Development Server
+---
+
+## 👤 Provisioning Your Initial Platform SuperAdmin
+
+EventForge supports two secure bootstrapping methods for fresh deployments (with zero default/demo passwords):
+
+### Method A: Web Self-Registration (Recommended for Fast Setup)
+1. Boot the application with a clean database.
+2. Navigate to `/register` in your browser.
+3. The **very first account registered** on a fresh deployment is automatically granted the `platform_admin` global role. All subsequent registrations receive standard user permissions.
+
+### Method B: CLI Admin Provisioning
+You can provision or promote an administrator directly from the command line:
+```bash
+npm run create-admin <admin_email> <admin_password> "Platform Administrator"
+```
+Or with environment variables:
+```bash
+INITIAL_ADMIN_EMAIL=admin@company.com INITIAL_ADMIN_PASSWORD=SecurePassword123! npm run create-admin
+```
+
+---
+
+## 🛠️ Database Management
+
+To clear all database collections and reset the database to a clean baseline:
+```bash
+npm run db:clean
+```
+*This safely purges all user accounts, events, registrations, sessions, sponsorships, and deliverables, while initializing default platform operational settings.*
+
+---
+
+## 💻 Running the Application
+
+### Development Mode
+Runs both Frontend (Vite on port 3000) and Backend (Nodemon on port 5000) concurrently:
 ```bash
 npm run dev
 ```
-The server will start on port `5000`:
-- **API Base**: `http://localhost:5000/api/v1`
-- **Health Check**: `http://localhost:5000/api/v1/health`
-- **Interactive Swagger Docs**: `http://localhost:5000/api/docs`
+
+### Production Build & Deployment
+1. Build the frontend client bundle:
+   ```bash
+   npm run build
+   ```
+2. Start the production backend server:
+   ```bash
+   npm start
+   ```
+*(When `NODE_ENV=production` and the frontend has been built, the backend server automatically serves the compiled static SPA from `Frontend/dist`.)*
 
 ---
 
-## 🏛️ System Architecture & RBAC
+## 🛡️ Dual-Layer RBAC Architecture
 
-EventForge enforces a **Dual-Layer Authorization Engine**:
-1. **Global Layer (`User.globalRole`)**:
-   - `platform_admin`: Superuser managing tenants, subscription tiers, and global security policies.
-   - `user`: Standard platform account.
-2. **Event-Scoped Layer (`EventMember.role`)**:
-   - `organizer`: Full authority over specific event instance (`/events/:eventId`).
-   - `staff`: Operational duties, scheduling, and broadcast announcements.
-   - `speaker`: Presenter profile management and schedule visibility.
-   - `sponsor`: Corporate booth collateral management.
-   - `attendee`: Participant derived via registration.
+EventForge implements dual-layer role-based access control:
 
-> **Cross-Event Isolation**: Organizers of Event A cannot inspect, edit, publish, or alter roster data for Event B. All cross-event mutation attempts are rejected with `403 Forbidden`.
+1. **Global Roles**:
+   - `platform_admin`: System superuser with omnipotent oversight (manages organizations, global policies, suspends tenants, platform analytics).
+   - `user`: Standard platform member eligible for event-specific role assignments.
 
-For in-depth specifications, refer to:
-- [`docs/ARCHITECTURE.md`](file:///c:/Event-forge/docs/ARCHITECTURE.md) — Architectural overview, layered patterns, Mermaid ERD, and product API contract.
-- [`docs/RBAC.md`](file:///c:/Event-forge/docs/RBAC.md) — Two-layer RBAC deep dive and boundary enforcement mechanics.
-- [`docs/API.md`](file:///c:/Event-forge/docs/API.md) — Detailed endpoint reference with request/response payloads.
+2. **Event-Scoped Roles**:
+   - `organizer`: Full governance over specific summit workspaces, scheduling grids, ticket pricing, deliverables, and team invitations.
+   - `staff`: Badge check-in scanning, manual attendance logging, and session headcount monitoring.
+   - `speaker`: Bio management, presentation material uploads, and session scheduling visibility.
+   - `sponsor`: Collateral uploads, deliverables tracking, brand lead telemetry, and booth management.
+   - `attendee`: Conference registration, digital QR badge access, agenda building, and session ratings.
 
 ---
 
-## 📁 Repository Structure
+## 📚 API Documentation
 
+When the backend server is running, interactive OpenAPI/Swagger documentation is available at:
 ```
-eventforge/
-├── docs/
-│   ├── ARCHITECTURE.md         # Layered architecture, Mermaid ERD & full API contract
-│   ├── API.md                  # REST API reference guide
-│   └── RBAC.md                 # Dual-layer RBAC specifications
-├── client/                     # Frontend client workspace (Prompt 2+)
-├── server/
-│   ├── package.json            # Server configuration & dependencies
-│   ├── uploads/                # Local uploaded asset storage directory
-│   ├── tests/
-│   │   ├── setup.js            # MongoMemoryServer test harness
-│   │   ├── auth.test.js        # Authentication & token rotation tests
-│   │   ├── rbac.test.js        # Cross-event boundary enforcement tests
-│   │   ├── event.test.js       # Event CRUD, lifecycle & duplication tests
-│   │   └── validation.test.js  # Zod schema validation error mapping tests
-│   └── src/
-│       ├── app.js              # Express app setup, security middlewares, route mounts
-│       ├── server.js           # Server listener & graceful shutdown handlers
-│       ├── config/
-│       │   ├── env.js          # Validated environment configuration (Zod)
-│       │   ├── db.js           # Mongoose connection management
-│       │   ├── roles.js        # Role constants & status definitions
-│       │   └── swagger.js      # OpenAPI 3.0 JSDoc configuration
-│       ├── middlewares/
-│       │   ├── authenticate.js # JWT access token verification
-│       │   ├── authorize.js    # Two-layer RBAC middleware
-│       │   ├── validate.js     # Zod request validation middleware
-│       │   ├── error.js        # Centralized error handler & status mapper
-│       │   ├── rateLimit.js    # Standard & auth rate limiters
-│       │   └── upload.js       # Multer multipart file upload handler
-│       ├── models/
-│       │   ├── Organization.js # Multi-tenant organization accounts
-│       │   ├── User.js         # User profiles & bcrypt hashes
-│       │   ├── RefreshToken.js # Rotating refresh tokens & family revocation
-│       │   ├── Event.js        # Events, lifecycle statuses, policies
-│       │   ├── EventMember.js  # Event-scoped memberships & roles
-│       │   ├── Venue.js        # Venues & embedded room layouts
-│       │   ├── Speaker.js      # Speaker catalog & availability
-│       │   ├── Announcement.js # Event broadcasts by audience segment
-│       │   ├── AuditLog.js     # Tamper-evident admin & security action logs
-│       │   └── GlobalPolicy.js # Platform configuration parameters
-│       ├── modules/
-│       │   ├── auth/           # register, login, refresh, logout, me, password reset
-│       │   ├── users/          # User directory & profile updates
-│       │   ├── organizations/  # Multi-tenant orgs, tiers, subscription management
-│       │   ├── events/         # Event CRUD, lifecycle (publish/cancel), duplicate
-│       │   ├── venues/         # Venues & room layouts management
-│       │   ├── speakers/       # Speaker catalog & availability
-│       │   ├── team/           # Event member invitations & role management
-│       │   ├── announcements/  # Event broadcast messaging
-│       │   ├── policies/       # Global system policies & admin settings
-│       │   └── uploads/        # Pluggable storage (Local Disk & S3 Interface)
-│       ├── seed/
-│       │   ├── index.js        # Database seeder execution script
-│       │   └── seedData.js     # Deterministic seed data fixtures
-│       └── utils/
-│           ├── ApiError.js     # Operational API error class
-│           ├── asyncHandler.js # Async error propagation wrapper
-│           ├── response.js     # Standard response envelope helpers
-│           ├── logger.js       # Structured logger
-│           ├── pagination.js   # Pagination, search & sort utility
-│           └── storage.js      # Storage provider abstraction (Disk & S3)
-└── package.json                # Monorepo root package.json (delegating scripts)
+http://localhost:5000/api/docs
 ```
+Health check endpoints:
+- `GET /health`
+- `GET /api/v1/health`

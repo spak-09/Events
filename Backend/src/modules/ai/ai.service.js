@@ -63,7 +63,7 @@ const generateTemplateSessionSummary = ({ sessionTitle, speakerName, keyPoints =
   const bulletList = keyPoints.map((kp) => `* **Key Takeaway**: ${kp}`).join('\n');
   return `### Executive Summary: "${sessionTitle}"
 ${speakerName ? `*Presented by: ${speakerName}*\n` : ''}
-#### Core Discussion Points & Actionable Insights
+#### Key Takeaways & Actionable Insights
 ${bulletList}
 
 #### Summary

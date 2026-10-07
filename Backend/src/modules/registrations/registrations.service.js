@@ -141,13 +141,13 @@ const registerForEvent = async (eventId, userId, data) => {
   let qrDataUrl = null;
 
   if (!claimedTicket) {
-    // Capacity exhausted -> place on waitlist (FIFO)
-    const currentWaitlistCount = await Registration.countDocuments({
-      event: eventId,
-      ticketType: data.ticketTypeId,
-      status: REGISTRATION_STATUS.WAITLISTED,
-    });
-    waitlistPosition = currentWaitlistCount + 1;
+    // Capacity exhausted -> atomically reserve next FIFO waitlist position
+    const updatedTicket = await TicketType.findByIdAndUpdate(
+      data.ticketTypeId,
+      { $inc: { waitlistCount: 1 } },
+      { new: true }
+    );
+    waitlistPosition = updatedTicket?.waitlistCount || 1;
     registrationStatus = REGISTRATION_STATUS.WAITLISTED;
   } else {
     // Capacity successfully reserved
@@ -255,6 +255,10 @@ const cancelRegistration = async (eventId, registrationId, actorUser) => {
       await nextInLine.save();
       promotedRegistration = nextInLine;
 
+      await TicketType.findByIdAndUpdate(registration.ticketType, {
+        $inc: { waitlistCount: -1 },
+      });
+
       // Adjust remaining waitlist positions
       await Registration.updateMany(
         {
@@ -275,6 +279,10 @@ const cancelRegistration = async (eventId, registrationId, actorUser) => {
       });
     }
   } else if (wasWaitlisted && previousWaitlistPos) {
+    await TicketType.findByIdAndUpdate(registration.ticketType, {
+      $inc: { waitlistCount: -1 },
+    });
+
     // Adjust waitlist positions behind the cancelled attendee
     await Registration.updateMany(
       {

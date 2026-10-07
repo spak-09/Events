@@ -42,6 +42,11 @@ const ticketTypeSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    waitlistCount: {
+      type: Number,
+      default: 0,
+      min: [0, 'Waitlist count cannot be negative'],
+    },
   },
   {
     timestamps: true,

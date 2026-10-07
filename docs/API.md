@@ -14,7 +14,7 @@ All API routes are prefixed with `/api/v1`. Interactive Swagger documentation is
   {
     "name": "Alex Mercer",
     "email": "alex@example.com",
-    "password": "Password123!"
+    "password": "<secure_password>"
   }
   ```
 - **Response** (`201 Created`):
@@ -42,7 +42,7 @@ All API routes are prefixed with `/api/v1`. Interactive Swagger documentation is
   ```json
   {
     "email": "alex@example.com",
-    "password": "Password123!"
+    "password": "<secure_password>"
   }
   ```
 - **Response** (`200 OK`):

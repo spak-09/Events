@@ -142,9 +142,12 @@ eventforge/
 │       │   ├── feedback/       # Attendee reviews, star ratings & aggregate sentiment
 │       │   ├── ai/             # Draft generators, template fallbacks, hybrid recommendations
 │       │   └── analytics/      # High-performance MongoDB aggregations (event & platform)
+│       ├── scripts/
+│       │   ├── clearData.js    # Database purge script for clean baseline deployment
+│       │   └── createAdmin.js  # Platform SuperAdmin CLI bootstrap utility
 │       ├── seed/
-│       │   ├── index.js        # Comprehensive database seeder (~200 attendees, 20 sessions)
-│       │   └── seedData.js     # Deterministic seed data fixtures
+│       │   ├── index.js        # Benchmark database seeder
+│       │   └── seedData.js     # Deterministic benchmark fixtures
 │       └── utils/
 │           ├── ApiError.js     # Operational API error class (incl. scheduleConflict)
 │           ├── asyncHandler.js # Async error propagation wrapper

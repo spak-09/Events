@@ -43,9 +43,13 @@ app.use(
 );
 
 // Enable CORS with credentials
+const allowedOrigins = env.CORS_ORIGIN.includes(',')
+  ? env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : env.CORS_ORIGIN;
+
 app.use(
   cors({
-    origin: env.CORS_ORIGIN,
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -132,6 +136,19 @@ app.use('/api/v1/ai', aiRouter);
 app.use('/api/v1/events/:id', recommendationsRouter);
 app.use('/api/v1/events/:eventId/analytics', eventAnalyticsRouter);
 app.use('/api/v1/analytics', adminAnalyticsRouter);
+
+// Serve frontend production build if available
+const frontendDist = path.resolve(__dirname, '../../Frontend/dist');
+const fs = require('fs');
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/health')) {
+      return next();
+    }
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
 
 // Catch-all 404 handler
 app.use(notFoundHandler);

@@ -13,9 +13,10 @@ const { GLOBAL_ROLES } = require('../../config/roles');
 
 const router = express.Router();
 
-// All organization administration routes require authentication & platform_admin global role
+// All organization routes require authentication
 router.use(authenticate);
-router.use(authorize({ global: [GLOBAL_ROLES.PLATFORM_ADMIN] }));
+
+const requirePlatformAdmin = authorize({ global: [GLOBAL_ROLES.PLATFORM_ADMIN] });
 
 /**
  * @openapi
@@ -26,13 +27,13 @@ router.use(authorize({ global: [GLOBAL_ROLES.PLATFORM_ADMIN] }));
  *     security:
  *       - bearerAuth: []
  */
-router.post('/', validate(createOrgSchema), organizationsController.createOrganization);
+router.post('/', requirePlatformAdmin, validate(createOrgSchema), organizationsController.createOrganization);
 
 /**
  * @openapi
  * /organizations:
  *   get:
- *     summary: List all organizations (Platform Admin only)
+ *     summary: List organizations (Authenticated users)
  *     tags: [Organizations]
  *     security:
  *       - bearerAuth: []
@@ -43,7 +44,7 @@ router.get('/', validate(listOrgQuerySchema), organizationsController.listOrgani
  * @openapi
  * /organizations/{id}:
  *   get:
- *     summary: Get organization by ID (Platform Admin only)
+ *     summary: Get organization by ID (Authenticated users)
  *     tags: [Organizations]
  *     security:
  *       - bearerAuth: []
@@ -59,7 +60,7 @@ router.get('/:id', organizationsController.getOrganizationById);
  *     security:
  *       - bearerAuth: []
  */
-router.patch('/:id', validate(updateOrgSchema), organizationsController.updateOrganization);
+router.patch('/:id', requirePlatformAdmin, validate(updateOrgSchema), organizationsController.updateOrganization);
 
 /**
  * @openapi
@@ -70,7 +71,7 @@ router.patch('/:id', validate(updateOrgSchema), organizationsController.updateOr
  *     security:
  *       - bearerAuth: []
  */
-router.patch('/:id/status', validate(updateOrgStatusSchema), organizationsController.updateOrganizationStatus);
+router.patch('/:id/status', requirePlatformAdmin, validate(updateOrgStatusSchema), organizationsController.updateOrganizationStatus);
 
 /**
  * @openapi
@@ -81,6 +82,6 @@ router.patch('/:id/status', validate(updateOrgStatusSchema), organizationsContro
  *     security:
  *       - bearerAuth: []
  */
-router.delete('/:id', organizationsController.deleteOrganization);
+router.delete('/:id', requirePlatformAdmin, organizationsController.deleteOrganization);
 
 module.exports = router;
